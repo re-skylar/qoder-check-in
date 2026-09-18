@@ -2,7 +2,7 @@
 
 跨平台的 Qoder CN 桌面端每日签到工具 / Cross-platform daily check-in tool for Qoder CN Desktop.
 
-- 本仓库 / This repository: [re-skylar/qoder-check-in-windows](https://github.com/re-skylar/qoder-check-in-windows)
+- 本仓库 / This repository: [re-skylar/qoder-check-in](https://github.com/re-skylar/qoder-check-in)
 - 原项目 / Original project: [hope0719/qoder-check-in](https://github.com/hope0719/qoder-check-in)
 - 原作者 / Original author: [hope0719](https://github.com/hope0719)
 - 许可证 / License: [MIT](LICENSE)
@@ -34,8 +34,8 @@
 #### macOS
 
 ```bash
-git clone https://github.com/re-skylar/qoder-check-in-windows.git
-cd qoder-check-in-windows
+git clone https://github.com/re-skylar/qoder-check-in.git
+cd qoder-check-in
 ./install.sh
 ```
 
@@ -44,8 +44,8 @@ cd qoder-check-in-windows
 #### Windows PowerShell
 
 ```powershell
-git clone https://github.com/re-skylar/qoder-check-in-windows.git
-cd qoder-check-in-windows
+git clone https://github.com/re-skylar/qoder-check-in.git
+cd qoder-check-in
 Set-ExecutionPolicy -Scope Process Bypass
 .\install.ps1
 ```
@@ -169,8 +169,8 @@ This tool does not open the GUI, simulate mouse clicks, or keep a copy of your c
 #### macOS
 
 ```bash
-git clone https://github.com/re-skylar/qoder-check-in-windows.git
-cd qoder-check-in-windows
+git clone https://github.com/re-skylar/qoder-check-in.git
+cd qoder-check-in
 ./install.sh
 ```
 
@@ -179,8 +179,8 @@ The first run may show a Keychain authorization dialog. Enter your login passwor
 #### Windows PowerShell
 
 ```powershell
-git clone https://github.com/re-skylar/qoder-check-in-windows.git
-cd qoder-check-in-windows
+git clone https://github.com/re-skylar/qoder-check-in.git
+cd qoder-check-in
 Set-ExecutionPolicy -Scope Process Bypass
 .\install.ps1
 ```
