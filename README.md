@@ -15,7 +15,7 @@
 
 - 支持 macOS 和 Windows。
 - 查询签到活动状态。
-- 执行每日签到；重复签到由服务端幂等处理。
+- 读取当前活动并领取每日 Credits；活动 ID 会自动跟随 Qoder 服务端变化。
 - macOS 使用钥匙串读取 Electron safeStorage 密钥。
 - Windows 使用当前用户的 Windows DPAPI 读取 Electron safeStorage 主密钥，再解密 Qoder 凭据。
 - macOS 使用 `launchd` 定时执行，Windows 使用任务计划程序定时执行。
@@ -61,7 +61,8 @@ node .\scripts\qoder-checkin.mjs status
 node .\scripts\qoder-checkin.mjs claim
 ```
 
-`status` 只读查询活动状态；`claim` 执行签到。
+`status` 只读查询当前活动；`claim` 会自动寻找可领取的活动并执行领取。
+如果当天没有可领取活动，或已经领取，命令会输出对应结果并返回退出码 `0`。
 
 ### Windows 凭据目录
 
@@ -113,6 +114,8 @@ Get-ScheduledTask -TaskName 'Qoder CN Daily Check-in'
 | `QODER_DATA_DIR` | 覆盖 Qoder IDE 数据目录 |
 | `QODER_KEYCHAIN_SERVICES` | macOS 钥匙串服务名，多个名称用逗号分隔 |
 | `QODER_API_BASE` | 覆盖签到接口域名 |
+| `QODER_CLIENT_TYPE` | 覆盖 Qoder 客户端类型，默认 `10` |
+| `QODER_CLIENT_VERSION` | 覆盖 Qoder 客户端版本，默认 `0.3.3` |
 | `QODER_CHECKIN_LOG` | 覆盖日志文件路径 |
 
 也可以使用 `--data-dir` 临时覆盖目录：
@@ -125,19 +128,19 @@ node .\scripts\qoder-checkin.mjs status --data-dir 'C:\path\to\qoder-data'
 
 | 退出码 | 含义 |
 |---:|---|
-| `0` | 成功，或今日已经领取 |
+| `0` | 已领取、已经领取，或当前没有可领取活动 |
 | `1` | 命令参数错误 |
 | `2` | 找不到或无法解密本地凭据 |
 | `3` | token 已过期；启动一次 Qoder CN IDE 后重试 |
-| `4` | 签到接口返回业务错误，例如活动尚未开始或已经结束 |
+| `4` | 活动接口或领取接口返回错误 |
 
-`claim` 返回 HTTP 409 且 `errorCode` 为 `AlreadyExists` 时，会按成功处理，因为这表示当天已经领取过。
+脚本会先请求当前活动列表，再向 `/campaigns/{campaignId}/claim` 领取。只有接口返回 `status: "CLAIMED"`，或复查确认该活动已是 `CLAIMED`，才会判定为成功。
 
 ### 原理和注意事项
 
 ```text
-GET  https://gateway.qoder.com.cn/sash/api/v1/me/daily-check-in/status
-POST https://gateway.qoder.com.cn/sash/api/v1/me/daily-check-in/claim
+GET  https://openapi.qoder.com.cn/sash/api/v1/me/campaigns
+POST https://openapi.qoder.com.cn/sash/api/v1/me/campaigns/{campaignId}/claim
 ```
 
 接口细节来自对官方客户端行为的分析，可能随 Qoder 版本或服务端活动变化。请仅在自己的账号和设备上使用，并遵守 Qoder 服务条款。项目不会上传凭据，但任何能在当前 Windows 用户权限下运行的程序理论上都可能访问同一用户可解密的数据。
@@ -150,7 +153,7 @@ This tool does not open the GUI, simulate mouse clicks, or keep a copy of your c
 
 - Supports macOS and Windows.
 - Checks the check-in campaign status.
-- Claims the daily reward; duplicate claims are handled idempotently by the server.
+- Finds the current claimable campaign and claims the daily reward.
 - Uses the macOS Keychain to read the Electron safeStorage key on macOS.
 - Uses the current Windows user's DPAPI to decrypt the Electron safeStorage key on Windows.
 - Uses `launchd` on macOS and Windows Task Scheduler on Windows.
@@ -196,7 +199,8 @@ node .\scripts\qoder-checkin.mjs status
 node .\scripts\qoder-checkin.mjs claim
 ```
 
-`status` performs a read-only campaign check; `claim` performs the check-in.
+`status` performs a read-only campaign check; `claim` finds and claims the current campaign.
+When no campaign is claimable or the reward was already claimed, the command reports that state and exits with code `0`.
 
 ### Windows credential directories
 
@@ -245,13 +249,13 @@ Edit the two `New-ScheduledTaskTrigger` calls in `install.ps1` to change the Win
 
 | Code | Meaning |
 |---:|---|
-| `0` | Success, or already claimed today |
+| `0` | Claimed, already claimed, or no claimable campaign |
 | `1` | Invalid command or arguments |
 | `2` | Local credentials missing or could not be decrypted |
 | `3` | Token expired; launch Qoder CN IDE once and retry |
-| `4` | API business error, such as campaign not started or already ended |
+| `4` | Campaign or claim API error |
 
-An HTTP 409 response with `errorCode: AlreadyExists` is treated as success because it means the reward was already claimed today.
+The script first loads the current campaign list and then posts to `/campaigns/{campaignId}/claim`. It only reports success when the API returns `status: "CLAIMED"`, or a follow-up query confirms that campaign is `CLAIMED`.
 
 ### Notes and disclaimer
 
